@@ -1,0 +1,5 @@
+{
+    "site": "<site>",
+    "google_backup_account": "<user>@<domain>",
+    "backup_types": ["<backup_type_1>", "<backup_type_2>"]
+}
