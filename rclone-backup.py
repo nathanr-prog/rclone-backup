@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
-VERSION = '1.064'
+VERSION = '1.065'
 
 # Version 1.062 - Added random sleep up to 20 minutes to prevent multiple devices simultaneously writing to gsheet log
 # Version 1.063 - Added nosleep and noupdate arguments to assist in troubleshooting
 # Version 1.064 - Added timestamp to logging, set log rotation time interval so new log wouldn't be created after script self-update
+# Version 1.065 - Changed dependency installer to pip instead of apt for Google API
 
 # Arguments:
 #    --nosleep : skip sleep when script executed
@@ -96,6 +97,32 @@ def check_command(command):
         log(f"[INFO] {command} is missing. Installing...")
         subprocess.run(["apt", "update"], check=True)
         subprocess.run(["apt", "install", command, "-y"], check=True)
+
+
+def pip_install(pkg):
+    """Install package via pip."""
+
+    # remove the EXTERNALLY-MANAGED directory if exists
+    python_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
+    dir_path = f"/usr/lib/{python_version}/EXTERNALLY-MANAGED"
+    if os.path.exists(dir_path):
+        try:
+            if os.path.isdir(dir_path):
+                shutil.rmtree(dir_path)
+            elif os.path.isfile(dir_path):
+                os.remove(dir_path)
+            elif os.path.islink(dir_path):
+                os.remove(dir_path)
+        except Exception as e:
+            log(f"[ERROR] removing {dir_path}: {e}")
+
+    try:
+        # Check if the package is already installed
+        subprocess.check_call([shutil.which('pip'), 'show', pkg])
+        print(f"[INFO] {pkg} is already installed.")
+    except subprocess.CalledProcessError:
+        log(f"[INFO] {pkg} is missing. Installing...")
+        subprocess.run(["pip", "install", pkg], check=True)
 
 
 def rotate_logs():
@@ -291,7 +318,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check that required software is installed
-    # check_command("pip")
+    check_command("pip")
     check_command("rclone")
 
     # Attempt to import the required Python non-standard modules and install if import fail
@@ -300,7 +327,8 @@ if __name__ == "__main__":
         from googleapiclient.errors import HttpError
         from google.oauth2 import service_account
     except ImportError as e:
-        check_command("python3-googleapi")
+        pip_install("google-api-python-client")
+        # check_command("python3-googleapi")
         from googleapiclient.discovery import build
         from googleapiclient.errors import HttpError
         from google.oauth2 import service_account
