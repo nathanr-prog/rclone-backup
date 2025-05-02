@@ -54,7 +54,7 @@ def get_backup_source(backup_type):
     if backup_type == "dhcp":
         return [ "/etc/dhcp" ]
     elif backup_type == "dns":
-        return [ "/etc/bind", "/var/cache/bind" ]
+        return [ "/etc/bind", "/var/cache/bind", "/var/lib/bind" ]
     elif backup_type == "gorillamanifests":
         return [ "/srv/www/gorilla/manifests" ]
     elif backup_type == "munkimanifests":
